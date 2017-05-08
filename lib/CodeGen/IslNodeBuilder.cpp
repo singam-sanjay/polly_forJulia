@@ -204,7 +204,9 @@ int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
 /// Extract the values and SCEVs needed to generate code for a block.
 static int findReferencesInBlock(struct SubtreeReferences &References,
                                  const ScopStmt *Stmt, const BasicBlock *BB) {
-  for (const Instruction &Inst : *BB)
+  for (const Instruction &Inst : *BB) {
+    if (polly::isIgnoredIntrinsic(&Inst))
+      continue;
     for (Value *SrcVal : Inst.operands()) {
       auto *Scope = References.LI.getLoopFor(BB);
       if (canSynthesize(SrcVal, References.S, &References.SE, Scope)) {
@@ -213,6 +215,7 @@ static int findReferencesInBlock(struct SubtreeReferences &References,
       } else if (Value *NewVal = References.GlobalMap.lookup(SrcVal))
         References.Values.insert(NewVal);
     }
+  }
   return 0;
 }
 
