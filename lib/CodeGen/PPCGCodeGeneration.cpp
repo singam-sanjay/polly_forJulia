@@ -1708,8 +1708,13 @@ std::string GPUNodeBuilder::createKernelASM() {
 }
 
 std::string GPUNodeBuilder::finalizeKernelFunction() {
-  llvm::StripDebugInfo(*GPUModule);
-  if (verifyModule(*GPUModule)) {
+  //llvm::StripDebugInfo(*GPUModule);
+	llvm::errs() << *GPUModule;
+  
+  raw_ostream *OS=nullptr;
+  if(true/*ReportLevel*/)
+    OS = &(llvm::errs());
+  if (verifyModule(*GPUModule,OS)) {
     BuildSuccessful = false;
     return "";
   }
@@ -2557,6 +2562,7 @@ public:
   }
 
   bool runOnScop(Scop &CurrentScop) override {
+    llvm::errs() << "PPCGCodeGen runOnSCoP " << CurrentScop.getNameStr() << '\n';
     S = &CurrentScop;
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();

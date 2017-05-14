@@ -103,6 +103,7 @@ public:
   }
 
   virtual bool runOnFunction(llvm::Function &F) override {
+    llvm::errs()<<"Cleaning Up "<<F.getName()<<'\n';
     if (!F.hasFnAttribute("polly-optimized")) {
       DEBUG(dbgs() << F.getName()
                    << ": Skipping cleanup because Polly did not optimize it.");
