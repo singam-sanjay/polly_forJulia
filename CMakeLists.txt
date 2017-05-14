@@ -206,6 +206,7 @@ include_directories(
   ${JSONCPP_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/pet/include
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/External
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools
   ${CMAKE_CURRENT_BINARY_DIR}/include
   )
 
