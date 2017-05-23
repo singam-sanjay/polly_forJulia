@@ -16,7 +16,7 @@
 #define POLLY_LINK_GPURUNTIME
 
 extern "C" {
-#include "GPURuntime/GPUJIT.c"
+#include "GPURuntime/GPUJIT.h"
 }
 
 namespace polly {
