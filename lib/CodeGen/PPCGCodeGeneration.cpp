@@ -1419,7 +1419,7 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   Builder.SetInsertPoint(&HostInsertPoint);
   Value *Parameters = createLaunchParameters(Kernel, F, SubtreeValues);
 
-  std::string Name = "kernel_" + std::to_string(Kernel->id);
+  std::string Name = S.getFunction().getName().str() + "_kernel_" + std::to_string(Kernel->id);
   Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
   Value *NameString = Builder.CreateGlobalStringPtr(Name, Name + "_name");
   Value *GPUKernel = createCallGetKernel(KernelString, NameString);
@@ -1460,8 +1460,7 @@ Function *
 GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel,
                                          SetVector<Value *> &SubtreeValues) {
   std::vector<Type *> Args;
-  std::string Identifier = "kernel_" + std::to_string(Kernel->id);
-
+  std::string Identifier = S.getFunction().getName().str() + "_kernel_" + std::to_string(Kernel->id);
   for (long i = 0; i < Prog->n_array; i++) {
     if (!ppcg_kernel_requires_array_argument(Kernel, i))
       continue;
@@ -1814,6 +1813,7 @@ std::string GPUNodeBuilder::finalizeKernelFunction() {
     BuildSuccessful = false;
     return "";
   }
+  llvm::errs() << "GPUModule Verified OK.\n";
 
   if (DumpKernelIR)
     outs() << *GPUModule << "\n";
@@ -2670,6 +2670,8 @@ public:
   }
 
   bool runOnScop(Scop &CurrentScop) override {
+    llvm::errs() << "PPCG got " << CurrentScop.getName() << '\n';
+
     S = &CurrentScop;
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
