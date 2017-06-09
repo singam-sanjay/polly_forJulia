@@ -1450,7 +1450,7 @@ char IslScheduleOptimizer::ID = 0;
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   // Skip SCoPs in case they're already optimised by PPCGCodeGeneration
-  if (S.isToBeSkipped("IslScheduleOptimizer::runOnScop"))
+  if (S.isToBeSkipped())
     return false;
 
   // Skip empty SCoPs but still allow code generation as it will delete the
