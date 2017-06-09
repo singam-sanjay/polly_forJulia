@@ -2842,6 +2842,7 @@ public:
 
     if (PPCGGen->tree)
       generateCode(isl_ast_node_copy(PPCGGen->tree), PPCGProg);
+    CurrentScop.markAsToBeSkipped("PPCGCodeGen::runOnScop");
 
     freeOptions(PPCGScop);
     freePPCGGen(PPCGGen);
