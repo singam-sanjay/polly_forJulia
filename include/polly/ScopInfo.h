@@ -1622,6 +1622,9 @@ private:
   /// Number of copy statements.
   unsigned CopyStmtsNum;
 
+  /// Flag to indicate if the Scop is to be skipped
+  bool SkipScop = false;
+
   typedef std::list<ScopStmt> StmtSet;
   /// The statements in this Scop.
   StmtSet Stmts;
@@ -2328,6 +2331,12 @@ public:
 
   /// Check if the SCoP has been optimized by the scheduler.
   bool isOptimized() const { return IsOptimized; }
+
+  /// Mark the SCoP to be skipped by ScopPass passes.
+  void markAsToBeSkipped(char caller[]) { llvm::errs() << caller << " marked " << getName() << " to be skipped.\n"; SkipScop = true; }
+
+  /// Check if the SCoP is to be skipped by ScopPass passes.
+  bool isToBeSkipped(char caller[]) const { llvm::errs() << caller << " Gonna Skip " << getName() << '\n';return SkipScop; }
 
   /// Get the name of the entry and exit blocks of this Scop.
   ///
