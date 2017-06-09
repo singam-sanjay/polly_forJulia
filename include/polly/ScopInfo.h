@@ -2333,10 +2333,10 @@ public:
   bool isOptimized() const { return IsOptimized; }
 
   /// Mark the SCoP to be skipped by ScopPass passes.
-  void markAsToBeSkipped(char caller[]) { llvm::errs() << caller << " marked " << getName() << " to be skipped.\n"; SkipScop = true; }
+  void markAsToBeSkipped(std::string caller="") { if(caller!="")llvm::errs() << caller << " marked " << getName() << " to be skipped.\n"; SkipScop = true; }
 
   /// Check if the SCoP is to be skipped by ScopPass passes.
-  bool isToBeSkipped(char caller[]) const { llvm::errs() << caller << " Gonna Skip " << getName() << '\n';return SkipScop; }
+  bool isToBeSkipped(std::string caller="") const { if(caller!="" && SkipScop)llvm::errs() << caller << " Gonna Skip " << getName() << '\n';return SkipScop; }
 
   /// Get the name of the entry and exit blocks of this Scop.
   ///
