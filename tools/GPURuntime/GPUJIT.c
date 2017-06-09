@@ -1098,7 +1098,9 @@ static int initialDeviceAPIsCUDA() {
 #pragma GCC diagnostic pop
 
 static PollyGPUContext *initContextCUDA() {
+  //DebugMode = 1;
   dump_function();
+  //DebugMode = 0;
   PollyGPUContext *Context;
   CUdevice Device;
 
@@ -1261,7 +1263,7 @@ static PollyGPUFunction *getKernelCUDA(const char *BinaryBuffer,
                                   ((CUDAKernel *)Function->Kernel)->CudaModule,
                                   KernelName);
   if (Res != CUDA_SUCCESS) {
-    fprintf(stderr, "Loading kernel function failed.\n");
+    fprintf(stderr, "Loading kernel function failed :: %i\n", Res);
     exit(-1);
   }
 
@@ -1339,16 +1341,16 @@ static void freeDeviceMemoryCUDA(PollyGPUDevicePtr *Allocation) {
 }
 
 static PollyGPUDevicePtr *allocateMemoryForDeviceCUDA(long MemSize) {
-  dump_function();
+  dump_function();//fprintf(stderr, "MemSize = %li\n", MemSize);
 
   PollyGPUDevicePtr *DevData = malloc(sizeof(PollyGPUDevicePtr));
   if (DevData == 0) {
-    fprintf(stderr, "Allocate memory for GPU device memory pointer failed.\n");
+    fprintf(stderr, "%i : Allocate memory for GPU device memory pointer failed.\n", __LINE__);
     exit(-1);
   }
   DevData->DevicePtr = (CUDADevicePtr *)malloc(sizeof(CUDADevicePtr));
   if (DevData->DevicePtr == 0) {
-    fprintf(stderr, "Allocate memory for GPU device memory pointer failed.\n");
+    fprintf(stderr, "%i : Allocate memory for GPU device memory pointer failed.\n", __LINE__);
     exit(-1);
   }
 
@@ -1356,7 +1358,7 @@ static PollyGPUDevicePtr *allocateMemoryForDeviceCUDA(long MemSize) {
       CuMemAllocFcnPtr(&(((CUDADevicePtr *)DevData->DevicePtr)->Cuda), MemSize);
 
   if (Res != CUDA_SUCCESS) {
-    fprintf(stderr, "Allocate memory for GPU device memory pointer failed.\n");
+    fprintf(stderr, "%i : Allocate memory for GPU device memory pointer failed.\n Reason: %i\n", __LINE__, Res);
     exit(-1);
   }
 
@@ -1390,7 +1392,7 @@ static void freeContextCUDA(PollyGPUContext *Context) {
 /******************************************************************************/
 
 PollyGPUContext *polly_initContext() {
-  DebugMode = getenv("POLLY_DEBUG") != 0;
+  DebugMode = getenv("POLLY_DEBUG") != 0;//1;
   CacheMode = getenv("POLLY_NOCACHE") == 0;
 
   dump_function();
