@@ -2619,7 +2619,9 @@ public:
     ScopAnnotator Annotator;
     Annotator.buildAliasScopes(*S);
 
-    Region *R = &S->getRegion();
+    Region *R_orig = &S->getRegion(), *R;
+    Region R_copy = Region(*R_orig);
+    R = &R_copy;
 
     simplifyRegion(R, DT, LI, RI);
 
@@ -2662,11 +2664,10 @@ public:
     /// In case a sequential kernel has more surrounding loops as any parallel
     /// kernel, the SCoP is probably mostly sequential. Hence, there is no
     /// point in running it on a GPU.
-    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel)
-      SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
+    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel
+        	|| !NodeBuilder.BuildSuccessful )
+      *(R_orig) = R_copy;
 
-    if (!NodeBuilder.BuildSuccessful)
-      SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
   }
 
   bool runOnScop(Scop &CurrentScop) override {
