@@ -1665,8 +1665,11 @@ void GPUNodeBuilder::finalizeKernelArguments(ppcg_kernel *Kernel) {
     /// code might be incorrect, if we only store at the end of the kernel.
     /// To support this case we need to store these scalars back at each
     /// memory store or at least before each kernel barrier.
-    if (Kernel->n_block != 0 || Kernel->n_grid != 0)
+    if (Kernel->n_block != 0 || Kernel->n_grid != 0) {
       BuildSuccessful = 0;
+      llvm::errs() << "finalizeKernelArguments(): StoreScalar problem.\n";
+    }
+      
 }
 
 void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
@@ -1809,11 +1812,12 @@ std::string GPUNodeBuilder::createKernelASM() {
 }
 
 std::string GPUNodeBuilder::finalizeKernelFunction() {
-  if (verifyModule(*GPUModule)) {
+  llvm::errs() << GPUModule->getName() << '\n';
+  if (verifyModule(*GPUModule, &(llvm::errs()))) {
     BuildSuccessful = false;
     return "";
   }
-  llvm::errs() << "GPUModule Verified OK.\n";
+  llvm::errs() << "Verified OK.\n";
 
   if (DumpKernelIR)
     outs() << *GPUModule << "\n";
@@ -2662,8 +2666,10 @@ public:
     /// In case a sequential kernel has more surrounding loops as any parallel
     /// kernel, the SCoP is probably mostly sequential. Hence, there is no
     /// point in running it on a GPU.
-    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel)
+    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel) {
       SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
+      llvm::errs() << "generateCode:" << S->getName() << ": Cost ineffective.\n";
+    }
 
     if (!NodeBuilder.BuildSuccessful)
       SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
