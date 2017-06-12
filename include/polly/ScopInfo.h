@@ -1641,7 +1641,7 @@ private:
   /// Number of copy statements.
   unsigned CopyStmtsNum;
 
-  /// Flag to indicate if the Scop is to be skipped
+  /// Flag to indicate if the Scop is to be skipped.
   bool SkipScop;
 
   typedef std::list<ScopStmt> StmtSet;
