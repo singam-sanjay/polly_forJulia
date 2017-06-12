@@ -1667,7 +1667,7 @@ void GPUNodeBuilder::finalizeKernelArguments(ppcg_kernel *Kernel) {
     /// memory store or at least before each kernel barrier.
     if (Kernel->n_block != 0 || Kernel->n_grid != 0) {
       BuildSuccessful = 0;
-      llvm::errs() << "finalizeKernelArguments(): StoreScalar problem.\n";
+      llvm::errs() << ":( StoredScalar problem.\n";
     }
       
 }
@@ -1817,7 +1817,7 @@ std::string GPUNodeBuilder::finalizeKernelFunction() {
     BuildSuccessful = false;
     return "";
   }
-  llvm::errs() << "Verified OK.\n";
+  llvm::errs() << ":) Verified OK.\n";
 
   if (DumpKernelIR)
     outs() << *GPUModule << "\n";
@@ -2668,11 +2668,13 @@ public:
     /// point in running it on a GPU.
     if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel) {
       SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
-      llvm::errs() << "generateCode:" << S->getName() << ": Cost ineffective.\n";
+      llvm::errs() << ":( Cost ineffective.\n";
     }
 
-    if (!NodeBuilder.BuildSuccessful)
+    if (!NodeBuilder.BuildSuccessful) {
       SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
+      llvm::errs() << ":( Build unsuccessful\n";
+    }
   }
 
   bool runOnScop(Scop &CurrentScop) override {
@@ -2686,8 +2688,10 @@ public:
     RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
 
     // We currently do not support scops with invariant loads.
-    if (S->hasInvariantAccesses())
+    if (S->hasInvariantAccesses()) {
+      llvm::errs() << ":( Has Invariant accesses.\n";
       return false;
+    }
 
     auto PPCGScop = createPPCGScop();
     auto PPCGProg = createPPCGProg(PPCGScop);
@@ -2697,6 +2701,8 @@ public:
       generateCode(isl_ast_node_copy(PPCGGen->tree), PPCGProg);
       CurrentScop.markAsToBeSkipped("PPCGCodeGen::runOnScop");
     }
+    else
+      llvm::errs() << ":( PPCGGen->tree == NULL.\n";
 
     freeOptions(PPCGScop);
     freePPCGGen(PPCGGen);
