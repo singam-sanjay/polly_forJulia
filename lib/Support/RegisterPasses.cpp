@@ -97,10 +97,9 @@ static cl::opt<TargetChoice>
            cl::values(clEnumValN(TARGET_CPU, "cpu", "generate CPU code")
 #ifdef GPU_CODEGEN
                           ,
-                      clEnumValN(TARGET_GPU, "gpu", "generate GPU code")
-		          ,
-		      clEnumValN(TARGET_Hybrid, "hybrid",
-			      "generate GPU code (preferably) or CPU code")
+                      clEnumValN(TARGET_GPU, "gpu", "generate GPU code"),
+                      clEnumValN(TARGET_Hybrid, "hybrid",
+                                 "generate GPU code (preferably) or CPU code")
 #endif
                           ),
            cl::init(TARGET_CPU), cl::ZeroOrMore, cl::cat(PollyCategory));
@@ -312,7 +311,7 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
   if (EnablePruneUnprofitable)
     PM.add(polly::createPruneUnprofitablePass());
 
-  if (Target == TARGET_CPU ) {
+  if (Target == TARGET_CPU) {
     switch (Optimizer) {
     case OPTIMIZER_NONE:
       break; /* Do nothing */
@@ -335,18 +334,18 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
     case CODEGEN_NONE:
       break;
     }
-  } 
+  }
 #ifdef GPU_CODEGEN
-    else if (Target == TARGET_GPU) {
-    if (ExportJScop)//Does this make sense ?
+  else if (Target == TARGET_GPU) {
+    if (ExportJScop) // Does this make sense ?
       PM.add(polly::createJSONExporterPass());
 
-      PM.add(
+    PM.add(
         polly::createPPCGCodeGenerationPass(GPUArchChoice, GPURuntimeChoice));
 
   } else {
 
-      PM.add(
+    PM.add(
         polly::createPPCGCodeGenerationPass(GPUArchChoice, GPURuntimeChoice));
 
     switch (Optimizer) {
@@ -373,7 +372,6 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
     }
   }
 #endif
-    
 
   // FIXME: This dummy ModulePass keeps some programs from miscompiling,
   // probably some not correctly preserved analyses. It acts as a barrier to
