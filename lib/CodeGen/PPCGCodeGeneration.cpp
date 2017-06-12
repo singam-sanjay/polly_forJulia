@@ -1667,7 +1667,7 @@ void GPUNodeBuilder::finalizeKernelArguments(ppcg_kernel *Kernel) {
     /// memory store or at least before each kernel barrier.
     if (Kernel->n_block != 0 || Kernel->n_grid != 0) {
       BuildSuccessful = 0;
-      llvm::errs() << ":( StoredScalar problem.\n"
+      llvm::errs() << ":( StoredScalar problem.\n";
     }
 }
 
@@ -2667,7 +2667,7 @@ public:
     /// point in running it on a GPU.
     if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel) {
       SplitBlock->getTerminator()->setOperand(0, Builder.getFalse());
-      llvm::errs() << ":( Cost ineffective\n";
+      llvm::errs() << ":( Cost ineffective.\n";
     }
 
     if (!NodeBuilder.BuildSuccessful) {
@@ -2688,7 +2688,7 @@ public:
 
     // We currently do not support scops with invariant loads.
     if (S->hasInvariantAccesses()) {
-      llvm::errs() << ":( Has Invariant accesses\n";
+      llvm::errs() << ":( Has Invariant accesses.\n";
       return false;
     }
 
@@ -2699,7 +2699,7 @@ public:
     if (PPCGGen->tree)
       generateCode(isl_ast_node_copy(PPCGGen->tree), PPCGProg);
     else
-      llvm::errs() << ":( PPCGGen->tree == NULL\n";
+      llvm::errs() << ":( PPCGGen->tree == NULL.\n";
 
     freeOptions(PPCGScop);
     freePPCGGen(PPCGGen);
