@@ -1621,7 +1621,7 @@ private:
   unsigned CopyStmtsNum;
 
   /// Flag to indicate if the Scop is to be skipped
-  bool SkipScop = false;
+  bool SkipScop;
 
   typedef std::list<ScopStmt> StmtSet;
   /// The statements in this Scop.
