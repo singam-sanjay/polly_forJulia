@@ -1816,7 +1816,7 @@ std::string GPUNodeBuilder::finalizeKernelFunction() {
     BuildSuccessful = false;
     return "";
   }
-  llvm::errs() << "Verified OK.\n";
+  llvm::errs() << ":) Verified OK.\n";
 
   if (DumpKernelIR)
     outs() << *GPUModule << "\n";
