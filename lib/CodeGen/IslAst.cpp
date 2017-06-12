@@ -625,7 +625,7 @@ void IslAstInfoWrapperPass::releaseMemory() { Ast.reset(); }
 
 bool IslAstInfoWrapperPass::runOnScop(Scop &Scop) {
 
-  // Skip SCoPs in case they're already handled by PPCGCodeGeneration
+  // Skip SCoPs in case they're already handled by PPCGCodeGeneration.
   if (Scop.isToBeSkipped())
     return false;
 
