@@ -335,22 +335,20 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
     case CODEGEN_NONE:
       break;
     }
-  } else if (Target == TARGET_GPU) {
+  } 
+#ifdef GPU_CODEGEN
+    else if (Target == TARGET_GPU) {
     if (ExportJScop)//Does this make sense ?
       PM.add(polly::createJSONExporterPass());
-#ifdef GPU_CODEGEN
+
       PM.add(
         polly::createPPCGCodeGenerationPass(GPUArchChoice, GPURuntimeChoice));
-#else
-      llvm::errs() << "Target==TARGET_GPU::Warning:GPU code generation requested without code generation capability."
-#endif
+
   } else {
-#ifdef GPU_CODEGEN
+
       PM.add(
         polly::createPPCGCodeGenerationPass(GPUArchChoice, GPURuntimeChoice));
-#else
-      llvm::errs() << "Target==TARGET_Hybrid::Warning:GPU code generation requested without code generation capability."
-#endif
+
     switch (Optimizer) {
     case OPTIMIZER_NONE:
       break; /* Do nothing */
@@ -374,7 +372,7 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
       break;
     }
   }
-
+#endif
     
 
   // FIXME: This dummy ModulePass keeps some programs from miscompiling,
