@@ -360,7 +360,7 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
     PM.add(llvm::createCFGPrinterLegacyPassPass());
 
 #ifdef GPU_CODEGEN
-  if (Target == TARGET_GPU || Target == TARGET_Hybrid) {
+  if (Target == TARGET_GPU || Target == TARGET_HYBRID) {
     // Invariant load hoisting not yet supported by GPU code generation.
     PollyInvariantLoadHoisting = false;
   }
