@@ -2462,9 +2462,11 @@ public:
       P = isl_printer_set_yaml_style(P, ISL_YAML_STYLE_BLOCK);
       P = isl_printer_print_str(P, "Schedule\n");
       P = isl_printer_print_str(P, "========\n");
-      if (Schedule)
+      if (Schedule) {
         P = isl_printer_print_schedule(P, Schedule);
-      else
+        isl_schedule_free(S->getScheduleTree());
+	S->setScheduleTree(isl_schedule_copy(Schedule));
+      } else
         P = isl_printer_print_str(P, "No schedule found\n");
 
       printf("%s\n", isl_printer_get_str(P));
