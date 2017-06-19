@@ -927,18 +927,23 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
   case isl_ast_node_error:
     llvm_unreachable("code generation error");
   case isl_ast_node_mark:
+    errs() << "mark\n";
     createMark(Node);
     return;
   case isl_ast_node_for:
+    errs() << "for\n";
     createFor(Node);
     return;
   case isl_ast_node_if:
+    errs() << "if\n";
     createIf(Node);
     return;
   case isl_ast_node_user:
+    errs() << "user\n";
     createUser(Node);
     return;
   case isl_ast_node_block:
+    errs() << "block\n";
     createBlock(Node);
     return;
   }

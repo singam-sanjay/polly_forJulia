@@ -975,6 +975,7 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
   isl_ast_expr_free(StmtExpr);
 
   const char *Str = isl_id_get_name(Id);
+  errs() << Str << '\n';
   if (!strcmp(Str, "kernel")) {
     createKernel(UserStmt);
     isl_ast_expr_free(Expr);
@@ -1385,6 +1386,7 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   // iteration. These values are necessary to generate code for SCEVs that
   // depend on such loops. As a result we need to pass them to the subfunction.
   for (const Loop *L : Loops) {
+    errs() << *L << '\n';
     const SCEV *OuterLIV = SE.getAddRecExpr(SE.getUnknown(Builder.getInt64(0)),
                                             SE.getUnknown(Builder.getInt64(1)),
                                             L, SCEV::FlagAnyWrap);
