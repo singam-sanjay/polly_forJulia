@@ -186,6 +186,9 @@ public:
   /// The maximal number of loops surrounding a parallel kernel.
   unsigned DeepestParallel = 0;
 
+  /// Generate the ASM strings.
+  void generateASM(__isl_take isl_ast_node *);
+
 private:
   /// A vector of array base pointers for which a new ScopArrayInfo was created.
   ///
@@ -216,6 +219,12 @@ private:
   /// The GPU Architecture to target.
   GPUArch Arch;
 
+  /// Kernels
+  std::vector<ppcg_kernel *> Kernels;
+
+  /// Kernel ASMString cache
+  std::map<int, std::string> ASMStringCache;
+
   /// Class to free isl_ids.
   class IslIdDeleter {
   public:
@@ -228,6 +237,8 @@ private:
   std::set<std::unique_ptr<isl_id, IslIdDeleter>> KernelIDs;
 
   IslExprBuilder::IDToScopArrayInfoTy IDToSAI;
+
+  void findKernelNodes(__isl_take isl_ast_node *Node);
 
   /// Create code for user-defined AST nodes.
   ///
@@ -541,6 +552,59 @@ void GPUNodeBuilder::finalize() {
 
   createCallFreeContext(GPUContext);
   IslNodeBuilder::finalize();
+}
+
+void GPUNodeBuilder::findKernelNodes(__isl_take isl_ast_node *Node) {
+  switch (isl_ast_node_get_type(Node)) {
+  case isl_ast_node_error:
+    llvm_unreachable("code generation error");
+  case isl_ast_node_mark:
+    errs() << "mark\n";
+    break;
+  case isl_ast_node_if:
+    errs() << "if\n";
+    findKernelNodes(isl_ast_node_if_get_then(Node));
+    if (isl_ast_node_if_has_else(Node))
+      findKernelNodes(isl_ast_node_if_get_else(Node));
+    break;
+  case isl_ast_node_block: {
+    errs() << "block\n";
+    isl_ast_node_list *List = isl_ast_node_block_get_children(Node);
+
+    for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i)
+      findKernelNodes(isl_ast_node_list_get_ast_node(List, i));
+    break;
+  }
+  case isl_ast_node_user: {
+    errs() << "user\n";
+    isl_ast_expr *Expr = isl_ast_node_user_get_expr(Node);
+    isl_ast_expr *StmtExpr = isl_ast_expr_get_op_arg(Expr, 0);
+    isl_id *Id = isl_ast_expr_get_id(StmtExpr);
+    isl_id_free(Id);
+    isl_ast_expr_free(StmtExpr);
+    isl_ast_expr_free(Expr);
+    const char *Str = isl_id_get_name(Id);
+
+    errs() << Str << '\n';
+    if (!strcmp(Str, "kernel")) {
+      errs() << "Gotcha kernel.\n";
+      isl_id *Id = isl_ast_node_get_annotation(Node);
+      ppcg_kernel *Kernel = (ppcg_kernel *)isl_id_get_user(Id);
+      isl_id_free(Id);
+      Kernels.push_back(Kernel);
+    }
+    break;
+  }
+  case isl_ast_node_for:
+    errs() << "for\n";
+    break;
+  default:
+    llvm_unreachable("Unknown isl_ast_node type");
+  }
+}
+
+void GPUNodeBuilder::generateASM(__isl_take isl_ast_node *Root) {
+  findKernelNodes(Root);
 }
 
 void GPUNodeBuilder::allocateDeviceArrays() {
@@ -2646,6 +2710,11 @@ public:
     Builder.SetInsertPoint(SplitBlock->getTerminator());
     NodeBuilder.addParameters(S->getContext());
 
+    NodeBuilder.generateASM(isl_ast_copy(Root));
+    /*    if((NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel)
+            || !NodeBuilder.BuildSuccessful)
+                return;
+    */
     isl_ast_build *Build = isl_ast_build_alloc(S->getIslCtx());
     isl_ast_expr *Condition = IslAst::buildRunCondition(*S, Build);
     isl_ast_expr *SufficientCompute = createSufficientComputeCheck(*S, Build);
