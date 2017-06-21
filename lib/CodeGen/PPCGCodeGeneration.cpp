@@ -12,9 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/CodeGen/PPCGCodeGeneration.h"
+#include <sstream>
+
 #include "polly/CodeGen/IslAst.h"
 #include "polly/CodeGen/IslNodeBuilder.h"
+#include "polly/CodeGen/PPCGCodeGeneration.h"
 #include "polly/CodeGen/Utils.h"
 #include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
@@ -174,6 +176,7 @@ public:
       : IslNodeBuilder(Builder, Annotator, DL, LI, SE, DT, S, StartBlock),
         Prog(Prog), Runtime(Runtime), Arch(Arch) {
     getExprBuilder().setIDToSAI(&IDToSAI);
+    initScopNameForIR();
   }
 
   /// Create after-run-time-check initialization code.
@@ -194,6 +197,9 @@ public:
   /// The maximal number of loops surrounding a parallel kernel.
   unsigned DeepestParallel = 0;
 
+  /// Return the name of the Scop which can be used as an identifier in LLVM IR.
+  std::string getScopNameForIR() const { return ScopNameForIR; }
+
 private:
   /// A vector of array base pointers for which a new ScopArrayInfo was created.
   ///
@@ -206,6 +212,9 @@ private:
 
   /// The current GPU context.
   Value *GPUContext;
+
+  /// The name of the Scop which can be used as an identifier in LLVM IR.
+  std::string ScopNameForIR;
 
   /// The set of isl_ids allocated in the kernel
   std::vector<isl_id *> KernelIds;
@@ -236,6 +245,9 @@ private:
   std::set<std::unique_ptr<isl_id, IslIdDeleter>> KernelIDs;
 
   IslExprBuilder::IDToScopArrayInfoTy IDToSAI;
+
+  /// Build ScopNameForIR from Scop.name
+  void initScopNameForIR();
 
   /// Create code for user-defined AST nodes.
   ///
@@ -556,6 +568,13 @@ private:
                               Value *BlockDimY, Value *BlockDimZ,
                               Value *Parameters);
 };
+
+void GPUNodeBuilder::initScopNameForIR() {
+  std::string EntryName, ExitName, dummy;
+  std::stringstream ss(S.getOrigNameStr());
+  ss >> EntryName >> dummy >> ExitName;
+  ScopNameForIR = EntryName.substr(1) + "---" + ExitName.substr(1);
+}
 
 void GPUNodeBuilder::initializeAfterRTH() {
   BasicBlock *NewBB = SplitBlock(Builder.GetInsertBlock(),
@@ -1516,7 +1535,9 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   Builder.SetInsertPoint(&HostInsertPoint);
   Value *Parameters = createLaunchParameters(Kernel, F, SubtreeValues);
 
-  std::string Name = S.getFunction().getName().str() + "_kernel_" + std::to_string(Kernel->id);
+  std::string Name = S.getFunction().getName().str() + "_" +
+                     getScopNameForIR() + "_kernel_" +
+                     std::to_string(Kernel->id);
   Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
   Value *NameString = Builder.CreateGlobalStringPtr(Name, Name + "_name");
   Value *GPUKernel = createCallGetKernel(KernelString, NameString);
@@ -1557,7 +1578,9 @@ Function *
 GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel,
                                          SetVector<Value *> &SubtreeValues) {
   std::vector<Type *> Args;
-  std::string Identifier = S.getFunction().getName().str() + "_kernel_" + std::to_string(Kernel->id);
+  std::string Identifier = S.getFunction().getName().str() + "_" +
+                           getScopNameForIR() + "_kernel_" +
+                           std::to_string(Kernel->id);
 
   for (long i = 0; i < Prog->n_array; i++) {
     if (!ppcg_kernel_requires_array_argument(Kernel, i))
@@ -1821,7 +1844,9 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
 void GPUNodeBuilder::createKernelFunction(
     ppcg_kernel *Kernel, SetVector<Value *> &SubtreeValues,
     SetVector<Function *> &SubtreeFunctions) {
-  std::string Identifier = "kernel_" + std::to_string(Kernel->id);
+  std::string Identifier = S.getFunction().getName().str() + "_" +
+                           getScopNameForIR() + "_kernel_" +
+                           std::to_string(Kernel->id);
   GPUModule.reset(new Module(Identifier, Builder.getContext()));
 
   switch (Arch) {

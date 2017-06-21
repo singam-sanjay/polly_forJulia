@@ -2359,6 +2359,9 @@ public:
   /// Get the name of this Scop.
   std::string getNameStr() const;
 
+  /// Get the original name of this Scop.
+  std::string getOrigNameStr() const { return name; }
+
   /// Get the constraint on parameter of this Scop.
   ///
   /// @return The constraint on parameter of this Scop.
