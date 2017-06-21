@@ -559,24 +559,25 @@ void GPUNodeBuilder::findKernelNodes(__isl_take isl_ast_node *Node) {
   case isl_ast_node_error:
     llvm_unreachable("code generation error");
   case isl_ast_node_mark:
-    errs() << "mark\n";
+    outs() << "mark\n";
     break;
   case isl_ast_node_if:
-    errs() << "if\n";
+    outs() << "if\n";
     findKernelNodes(isl_ast_node_if_get_then(Node));
     if (isl_ast_node_if_has_else(Node))
       findKernelNodes(isl_ast_node_if_get_else(Node));
     break;
   case isl_ast_node_block: {
-    errs() << "block\n";
+    outs() << "block\n";
     isl_ast_node_list *List = isl_ast_node_block_get_children(Node);
 
     for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i)
       findKernelNodes(isl_ast_node_list_get_ast_node(List, i));
+    isl_ast_node_list_free(List);
     break;
   }
   case isl_ast_node_user: {
-    errs() << "user\n";
+    outs() << "user\n";
     isl_ast_expr *Expr = isl_ast_node_user_get_expr(Node);
     isl_ast_expr *StmtExpr = isl_ast_expr_get_op_arg(Expr, 0);
     isl_id *Id = isl_ast_expr_get_id(StmtExpr);
@@ -585,7 +586,7 @@ void GPUNodeBuilder::findKernelNodes(__isl_take isl_ast_node *Node) {
     isl_ast_expr_free(Expr);
     const char *Str = isl_id_get_name(Id);
 
-    errs() << Str << '\n';
+    outs() << Str << '\n';
     if (!strcmp(Str, "kernel")) {
       errs() << "Gotcha kernel.\n";
       isl_id *Id = isl_ast_node_get_annotation(Node);
@@ -596,7 +597,7 @@ void GPUNodeBuilder::findKernelNodes(__isl_take isl_ast_node *Node) {
     break;
   }
   case isl_ast_node_for:
-    errs() << "for\n";
+    outs() << "for\n";
     break;
   default:
     llvm_unreachable("Unknown isl_ast_node type");
@@ -1039,7 +1040,7 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
   isl_ast_expr_free(StmtExpr);
 
   const char *Str = isl_id_get_name(Id);
-  errs() << Str << '\n';
+  outs() << Str << '\n';
   if (!strcmp(Str, "kernel")) {
     createKernel(UserStmt);
     isl_ast_expr_free(Expr);
@@ -2710,7 +2711,7 @@ public:
     Builder.SetInsertPoint(SplitBlock->getTerminator());
     NodeBuilder.addParameters(S->getContext());
 
-    NodeBuilder.generateASM(isl_ast_copy(Root));
+    NodeBuilder.generateASM(Root);
     /*    if((NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel)
             || !NodeBuilder.BuildSuccessful)
                 return;
