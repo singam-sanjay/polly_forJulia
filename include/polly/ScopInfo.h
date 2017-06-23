@@ -2357,7 +2357,10 @@ public:
   std::pair<std::string, std::string> getEntryExitStr() const;
 
   /// Get the name of this Scop.
-  std::string getNameStr() const;
+  std::string getNameStr() const { return name; }
+
+  /// Get the name of this Scop with it updated boundaries
+  std::string getCurrentNameStr() const;
 
   /// Get the constraint on parameter of this Scop.
   ///

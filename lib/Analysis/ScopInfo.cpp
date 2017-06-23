@@ -3458,7 +3458,7 @@ static Loop *getLoopSurroundingScop(Scop &S, LoopInfo &LI) {
 
 Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
            ScopDetection::DetectionContext &DC)
-    : SE(&ScalarEvolution), R(R), name(R.getNameStr()), IsOptimized(false),
+    : SE(&ScalarEvolution), R(R), name(getCurrentNameStr()), IsOptimized(false),
       HasSingleExitEdge(R.getExitingBlock()), HasErrorBlock(false),
       MaxLoopDepth(0), CopyStmtsNum(0), DC(DC),
       IslCtx(isl_ctx_alloc(), isl_ctx_free), Context(nullptr),
@@ -4147,7 +4147,7 @@ std::string Scop::getInvalidContextStr() const {
   return stringFromIslObj(InvalidContext);
 }
 
-std::string Scop::getNameStr() const {
+std::string Scop::getCurrentNameStr() const {
   std::string ExitName, EntryName;
   std::tie(EntryName, ExitName) = getEntryExitStr();
   return EntryName + "---" + ExitName;
