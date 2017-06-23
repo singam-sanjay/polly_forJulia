@@ -569,11 +569,19 @@ private:
                               Value *Parameters);
 };
 
+void replace_char(std::string &bb_name, char find, char replace) {
+  for (char &a : bb_name)
+    if (a == find)
+      a = replace;
+}
+
 void GPUNodeBuilder::initScopNameForIR() {
   std::string EntryName, ExitName, dummy;
   std::stringstream ss(S.getOrigNameStr());
   ss >> EntryName >> dummy >> ExitName;
-  ScopNameForIR = EntryName.substr(1) + "---" + ExitName.substr(1);
+  replace_char(EntryName, '.', '$');
+  replace_char(ExitName, '.', '$');
+  ScopNameForIR = EntryName + "_" + ExitName;
 }
 
 void GPUNodeBuilder::initializeAfterRTH() {
@@ -1535,8 +1543,8 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   Builder.SetInsertPoint(&HostInsertPoint);
   Value *Parameters = createLaunchParameters(Kernel, F, SubtreeValues);
 
-  std::string Name = S.getFunction().getName().str() + "_" +
-                     getScopNameForIR() + "_kernel_" +
+  std::string Name = "FUNC_" + S.getFunction().getName().str() + "_SCOP_" +
+                     getScopNameForIR() + "_KERNEL_" +
                      std::to_string(Kernel->id);
   Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
   Value *NameString = Builder.CreateGlobalStringPtr(Name, Name + "_name");
@@ -1578,8 +1586,8 @@ Function *
 GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel,
                                          SetVector<Value *> &SubtreeValues) {
   std::vector<Type *> Args;
-  std::string Identifier = S.getFunction().getName().str() + "_" +
-                           getScopNameForIR() + "_kernel_" +
+  std::string Identifier = "FUNC_" + S.getFunction().getName().str() +
+                           "_SCOP_" + getScopNameForIR() + "_KERNEL_" +
                            std::to_string(Kernel->id);
 
   for (long i = 0; i < Prog->n_array; i++) {
@@ -1844,8 +1852,8 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
 void GPUNodeBuilder::createKernelFunction(
     ppcg_kernel *Kernel, SetVector<Value *> &SubtreeValues,
     SetVector<Function *> &SubtreeFunctions) {
-  std::string Identifier = S.getFunction().getName().str() + "_" +
-                           getScopNameForIR() + "_kernel_" +
+  std::string Identifier = "FUNC_" + S.getFunction().getName().str() +
+                           "_SCOP_" + getScopNameForIR() + "_KERNEL_" +
                            std::to_string(Kernel->id);
   GPUModule.reset(new Module(Identifier, Builder.getContext()));
 
