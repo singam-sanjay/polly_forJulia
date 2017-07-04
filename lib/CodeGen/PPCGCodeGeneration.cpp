@@ -200,7 +200,7 @@ public:
   /// Return the name of the Scop which can be used as an identifier in LLVM IR.
   std::string getScopNameForIR() const { return ScopNameForIR; }
 
-  /// Return the name of the ptx_kernel.
+  /// Return the name to set for the ptx_kernel.
   std::string getKernelFuncName(int Kernel_id);
 
 private:
