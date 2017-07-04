@@ -1621,6 +1621,9 @@ private:
   /// The name of the SCoP (identical to the regions name)
   std::string name;
 
+  /// Number to uniquely identify Scop
+  int ScopID;
+
   // Access functions of the SCoP.
   //
   // This owns all the MemoryAccess objects of the Scop created in this pass.
