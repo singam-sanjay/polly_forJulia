@@ -174,9 +174,9 @@ public:
                  DominatorTree &DT, Scop &S, BasicBlock *StartBlock,
                  gpu_prog *Prog, GPURuntime Runtime, GPUArch Arch)
       : IslNodeBuilder(Builder, Annotator, DL, LI, SE, DT, S, StartBlock),
-        Prog(Prog), Runtime(Runtime), Arch(Arch) {
+        ScopNameForIR(retScopNameForIR()), Prog(Prog), Runtime(Runtime),
+        Arch(Arch) {
     getExprBuilder().setIDToSAI(&IDToSAI);
-    initScopNameForIR();
   }
 
   /// Create after-run-time-check initialization code.
@@ -217,7 +217,7 @@ private:
   Value *GPUContext;
 
   /// The name of the Scop which can be used as an identifier in LLVM IR.
-  std::string ScopNameForIR;
+  const std::string ScopNameForIR;
 
   /// The set of isl_ids allocated in the kernel
   std::vector<isl_id *> KernelIds;
@@ -249,8 +249,8 @@ private:
 
   IslExprBuilder::IDToScopArrayInfoTy IDToSAI;
 
-  /// Build ScopNameForIR from Scop.name
-  void initScopNameForIR();
+  /// Build and return a string to set ScopNameForIR
+  std::string retScopNameForIR();
 
   /// Create code for user-defined AST nodes.
   ///
@@ -578,13 +578,13 @@ void replace_char(std::string &bb_name, char find, char replace) {
       a = replace;
 }
 
-void GPUNodeBuilder::initScopNameForIR() {
+std::string GPUNodeBuilder::retScopNameForIR() {
   std::string EntryName, ExitName, dummy;
   std::stringstream ss(S.getOrigNameStr());
   ss >> EntryName >> dummy >> ExitName;
   replace_char(EntryName, '.', '$');
   replace_char(ExitName, '.', '$');
-  ScopNameForIR = EntryName + "_" + ExitName;
+  return EntryName + "_" + ExitName;
 }
 
 std::string GPUNodeBuilder::getKernelFuncName(int Kernel_id) {
