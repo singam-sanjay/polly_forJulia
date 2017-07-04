@@ -12,11 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
-
+#include "polly/CodeGen/PPCGCodeGeneration.h"
 #include "polly/CodeGen/IslAst.h"
 #include "polly/CodeGen/IslNodeBuilder.h"
-#include "polly/CodeGen/PPCGCodeGeneration.h"
 #include "polly/CodeGen/Utils.h"
 #include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
