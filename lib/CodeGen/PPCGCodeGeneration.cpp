@@ -174,8 +174,7 @@ public:
                  DominatorTree &DT, Scop &S, BasicBlock *StartBlock,
                  gpu_prog *Prog, GPURuntime Runtime, GPUArch Arch)
       : IslNodeBuilder(Builder, Annotator, DL, LI, SE, DT, S, StartBlock),
-        ScopNameForIR(retScopNameForIR()), Prog(Prog), Runtime(Runtime),
-        Arch(Arch) {
+        Prog(Prog), Runtime(Runtime), Arch(Arch) {
     getExprBuilder().setIDToSAI(&IDToSAI);
   }
 
@@ -197,9 +196,6 @@ public:
   /// The maximal number of loops surrounding a parallel kernel.
   unsigned DeepestParallel = 0;
 
-  /// Return the name of the Scop which can be used as an identifier in LLVM IR.
-  std::string getScopNameForIR() const { return ScopNameForIR; }
-
   /// Return the name to set for the ptx_kernel.
   std::string getKernelFuncName(int Kernel_id);
 
@@ -215,9 +211,6 @@ private:
 
   /// The current GPU context.
   Value *GPUContext;
-
-  /// The name of the Scop which can be used as an identifier in LLVM IR.
-  const std::string ScopNameForIR;
 
   /// The set of isl_ids allocated in the kernel
   std::vector<isl_id *> KernelIds;
@@ -248,9 +241,6 @@ private:
   std::set<std::unique_ptr<isl_id, IslIdDeleter>> KernelIDs;
 
   IslExprBuilder::IDToScopArrayInfoTy IDToSAI;
-
-  /// Build and return a string to set ScopNameForIR
-  std::string retScopNameForIR();
 
   /// Create code for user-defined AST nodes.
   ///
@@ -572,24 +562,9 @@ private:
                               Value *Parameters);
 };
 
-void replace_char(std::string &bb_name, char find, char replace) {
-  for (char &a : bb_name)
-    if (a == find)
-      a = replace;
-}
-
-std::string GPUNodeBuilder::retScopNameForIR() {
-  std::string EntryName, ExitName, dummy;
-  std::stringstream ss(S.getOrigNameStr());
-  ss >> EntryName >> dummy >> ExitName;
-  replace_char(EntryName, '.', '$');
-  replace_char(ExitName, '.', '$');
-  return EntryName + "_" + ExitName;
-}
-
 std::string GPUNodeBuilder::getKernelFuncName(int Kernel_id) {
-  return "FUNC_" + S.getFunction().getName().str() + "_SCOP_" +
-         getScopNameForIR() + "_KERNEL_" + std::to_string(Kernel_id);
+  return "FUNC_" + S.getFunction().getName().str() + "_KERNEL_" +
+         std::to_string(Kernel_id);
 }
 
 void GPUNodeBuilder::initializeAfterRTH() {
