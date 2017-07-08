@@ -1631,7 +1631,9 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
 
   std::string Name = getKernelFuncName(Kernel->id);
   Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
+  errs() <<  ( KernelString->hasName() ? "Yes" : "No" ) << " name.\n";
   Value *NameString = Builder.CreateGlobalStringPtr(KernelString->getName().str(), Name + "_name");
+  errs() << "NameString has " << ( NameString->hasName() ? "" : "no" ) << " name.\n";
   Value *GPUKernel = createCallGetKernel(KernelString, NameString);
 
   Value *GridDimX, *GridDimY;
