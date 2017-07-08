@@ -1619,9 +1619,6 @@ private:
   ///
   static std::string CurrentFunc;
 
-  /// A number that uniquely represents a Scop within its function
-  const int ID;
-
   // Access functions of the SCoP.
   //
   // This owns all the MemoryAccess objects of the Scop created in this pass.
@@ -1813,6 +1810,9 @@ private:
 
   /// The smallest statement index not yet assigned.
   long StmtIdx = 0;
+
+  /// A number that uniquely represents a Scop within its function
+  const int ID;
 
   ///
   static int getNextID(std::string ParentFunc);
