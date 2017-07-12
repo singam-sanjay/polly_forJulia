@@ -1,69 +1,71 @@
 ; RUN: opt %loadPolly -polly-process-unprofitable -polly-codegen-ppcg \
-; RUN: -polly-acc-dump-kernel-ir -disable-output < %s | FileCheck -check-prefix=KERNEL %s
+; RUN: -polly-acc-dump-kernel-ir -disable-output < %s | \
+; RUN: FileCheck -check-prefix=KERNEL %s
 
 ; REQUIRES: pollyacc
 
-; KERNEL: define ptx_kernel void @FUNC_foo_SCOP_0_KERNEL_0(i8 addrspace(1)* %MemRef0, i32 %p_0) #0 {
-; KERNER-NEXT: define ptx_kernel void @FUNC_foo_SCOP_1_KERNEL_0(i8 addrspace(1)* %MemRef0, i32 %p_0) #0 {
-; KERNER-NEXT: define ptx_kernel void @FUNC_foo2_SCOP_0_KERNEL_0(i8 addrspace(1)* %MemRef0, i32 %p_0) #0 {
+; KERNEL: define ptx_kernel void @FUNC_foo_SCOP_0_KERNEL_0(i8 addrspace(1)* %MemRef_arg1, i32 %arg) #0 {
+; KERNEL: define ptx_kernel void @FUNC_foo_SCOP_1_KERNEL_0(i8 addrspace(1)* %MemRef_arg1, i32 %arg) #0 {
+; KERNEL: define ptx_kernel void @FUNC_foo2_SCOP_0_KERNEL_0(i8 addrspace(1)* %MemRef_arg1, i32 %arg) #0 {
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; Function Attrs: nounwind uwtable
-define void @foo(i32, i32*) #0 {
-  br label %3
+define void @foo(i32 %arg, i32* %arg1) #0 {
+bb:
+  br label %bb2
 
-; <label>:3:                                      ; preds = %2
-  %4 = icmp sgt i32 %0, 0
-  br i1 %4, label %5, label %15
+bb2:                                              ; preds = %bb
+  %tmp = icmp sgt i32 %arg, 0
+  br i1 %tmp, label %bb3, label %bb13
 
-; <label>:5:                                      ; preds = %3
-  br label %6
+bb3:                                              ; preds = %bb2
+  br label %bb4
 
-; <label>:6:                                      ; preds = %5, %6
-  %7 = phi i64 [ 0, %5 ], [ %11, %6 ]
-  %8 = getelementptr inbounds i32, i32* %1, i64 %7
-  %9 = load i32, i32* %8, align 4, !tbaa !2
-  %10 = add nsw i32 %9, 1
-  store i32 %10, i32* %8, align 4, !tbaa !2
-  %11 = add nuw nsw i64 %7, 1
-  %12 = zext i32 %0 to i64
-  %13 = icmp ne i64 %11, %12
-  br i1 %13, label %6, label %14
+bb4:                                              ; preds = %bb4, %bb3
+  %tmp5 = phi i64 [ 0, %bb3 ], [ %tmp9, %bb4 ]
+  %tmp6 = getelementptr inbounds i32, i32* %arg1, i64 %tmp5
+  %tmp7 = load i32, i32* %tmp6, align 4, !tbaa !2
+  %tmp8 = add nsw i32 %tmp7, 1
+  store i32 %tmp8, i32* %tmp6, align 4, !tbaa !2
+  %tmp9 = add nuw nsw i64 %tmp5, 1
+  %tmp10 = zext i32 %arg to i64
+  %tmp11 = icmp ne i64 %tmp9, %tmp10
+  br i1 %tmp11, label %bb4, label %bb12
 
-; <label>:14:                                     ; preds = %6
-  br label %15
+bb12:                                             ; preds = %bb4
+  br label %bb13
 
-; <label>:15:                                     ; preds = %14, %3
-  %16 = tail call i64 @clock() #3
-  %17 = icmp eq i64 %16, 0
-  br i1 %17, label %18, label %31
+bb13:                                             ; preds = %bb12, %bb2
+  %tmp14 = tail call i64 @clock() #3
+  %tmp15 = icmp eq i64 %tmp14, 0
+  br i1 %tmp15, label %bb16, label %bb29
 
-; <label>:18:                                     ; preds = %15
-  %19 = icmp sgt i32 %0, 0
-  br i1 %19, label %20, label %30
+bb16:                                             ; preds = %bb13
+  %tmp17 = icmp sgt i32 %arg, 0
+  br i1 %tmp17, label %bb18, label %bb28
 
-; <label>:20:                                     ; preds = %18
-  br label %21
+bb18:                                             ; preds = %bb16
+  br label %bb19
 
-; <label>:21:                                     ; preds = %20, %21
-  %22 = phi i64 [ 0, %20 ], [ %26, %21 ]
-  %23 = getelementptr inbounds i32, i32* %1, i64 %22
-  %24 = load i32, i32* %23, align 4, !tbaa !2
-  %25 = add nsw i32 %24, 1
-  store i32 %25, i32* %23, align 4, !tbaa !2
-  %26 = add nuw nsw i64 %22, 1
-  %27 = zext i32 %0 to i64
-  %28 = icmp ne i64 %26, %27
-  br i1 %28, label %21, label %29
+bb19:                                             ; preds = %bb19, %bb18
+  %tmp20 = phi i64 [ 0, %bb18 ], [ %tmp24, %bb19 ]
+  %tmp21 = getelementptr inbounds i32, i32* %arg1, i64 %tmp20
+  %tmp22 = load i32, i32* %tmp21, align 4, !tbaa !2
+  %tmp23 = add nsw i32 %tmp22, 1
+  store i32 %tmp23, i32* %tmp21, align 4, !tbaa !2
+  %tmp24 = add nuw nsw i64 %tmp20, 1
+  %tmp25 = zext i32 %arg to i64
+  %tmp26 = icmp ne i64 %tmp24, %tmp25
+  br i1 %tmp26, label %bb19, label %bb27
 
-; <label>:29:                                     ; preds = %21
-  br label %30
+bb27:                                             ; preds = %bb19
+  br label %bb28
 
-; <label>:30:                                     ; preds = %29, %18
-  br label %31
+bb28:                                             ; preds = %bb27, %bb16
+  br label %bb29
 
-; <label>:31:                                     ; preds = %30, %15
+bb29:                                             ; preds = %bb28, %bb13
   ret void
 }
 
@@ -77,31 +79,32 @@ declare i64 @clock() #2
 declare void @llvm.lifetime.end.p0i8(i64, i8* nocapture) #1
 
 ; Function Attrs: nounwind uwtable
-define void @foo2(i32, i32*) #0 {
-  br label %3
+define void @foo2(i32 %arg, i32* %arg1) #0 {
+bb:
+  br label %bb2
 
-; <label>:3:                                      ; preds = %2
-  %4 = icmp sgt i32 %0, 0
-  br i1 %4, label %5, label %15
+bb2:                                              ; preds = %bb
+  %tmp = icmp sgt i32 %arg, 0
+  br i1 %tmp, label %bb3, label %bb13
 
-; <label>:5:                                      ; preds = %3
-  br label %6
+bb3:                                              ; preds = %bb2
+  br label %bb4
 
-; <label>:6:                                      ; preds = %5, %6
-  %7 = phi i64 [ 0, %5 ], [ %11, %6 ]
-  %8 = getelementptr inbounds i32, i32* %1, i64 %7
-  %9 = load i32, i32* %8, align 4, !tbaa !2
-  %10 = add nsw i32 %9, 1
-  store i32 %10, i32* %8, align 4, !tbaa !2
-  %11 = add nuw nsw i64 %7, 1
-  %12 = zext i32 %0 to i64
-  %13 = icmp ne i64 %11, %12
-  br i1 %13, label %6, label %14
+bb4:                                              ; preds = %bb4, %bb3
+  %tmp5 = phi i64 [ 0, %bb3 ], [ %tmp9, %bb4 ]
+  %tmp6 = getelementptr inbounds i32, i32* %arg1, i64 %tmp5
+  %tmp7 = load i32, i32* %tmp6, align 4, !tbaa !2
+  %tmp8 = add nsw i32 %tmp7, 1
+  store i32 %tmp8, i32* %tmp6, align 4, !tbaa !2
+  %tmp9 = add nuw nsw i64 %tmp5, 1
+  %tmp10 = zext i32 %arg to i64
+  %tmp11 = icmp ne i64 %tmp9, %tmp10
+  br i1 %tmp11, label %bb4, label %bb12
 
-; <label>:14:                                     ; preds = %6
-  br label %15
+bb12:                                             ; preds = %bb4
+  br label %bb13
 
-; <label>:15:                                     ; preds = %14, %3
+bb13:                                             ; preds = %bb12, %bb2
   ret void
 }
 
