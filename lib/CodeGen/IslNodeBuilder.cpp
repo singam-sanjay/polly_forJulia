@@ -53,6 +53,10 @@ using namespace llvm;
 
 STATISTIC(VersionedScops, "Number of SCoPs that required versioning.");
 
+static bool isPrintModule;
+Module *M = nullptr;
+#define pN(node_type) { if(::isPrintModule)errs() << "----" << node_type << "-----\n"; }
+#define pM()          { if(::isPrintModule)errs() << *(::M); }
 // The maximal number of dimensions we allow during invariant load construction.
 // More complex access ranges will result in very high compile time and are also
 // unlikely to result in good code. This value is very high and should only
@@ -407,6 +411,7 @@ void IslNodeBuilder::createMark(__isl_take isl_ast_node *Node) {
 
 void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
                                      int VectorWidth) {
+  pN("for.vector");
   isl_ast_node *Body = isl_ast_node_for_get_body(For);
   isl_ast_expr *Init = isl_ast_node_for_get_init(For);
   isl_ast_expr *Inc = isl_ast_node_for_get_inc(For);
@@ -467,6 +472,7 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
 
 void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
                                          bool KnownParallel) {
+  pN("for.seq");
   isl_ast_node *Body;
   isl_ast_expr *Init, *Inc, *Iterator, *UB;
   isl_id *IteratorID;
@@ -576,6 +582,7 @@ static void removeSubFuncFromDomTree(Function *F, DominatorTree &DT) {
 }
 
 void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
+  pN("for.vector");
   isl_ast_node *Body;
   isl_ast_expr *Init, *Inc, *Iterator, *UB;
   isl_id *IteratorID;
@@ -711,6 +718,7 @@ static bool hasPartialAccesses(__isl_take isl_ast_node *Node) {
 }
 
 void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
+  pN("for");
   bool Vector = PollyVectorizerChoice == VECTORIZER_POLLY;
 
   if (Vector && IslAstInfo::isInnermostParallel(For) &&
@@ -730,6 +738,8 @@ void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
 }
 
 void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
+  pN("if");
+
   isl_ast_expr *Cond = isl_ast_node_if_get_cond(If);
 
   Function *F = Builder.GetInsertBlock()->getParent();
@@ -764,12 +774,17 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   Builder.CreateBr(MergeBB);
   Builder.SetInsertPoint(&ThenBB->front());
 
+  pM();
+
+  pN("if.then");
   create(isl_ast_node_if_get_then(If));
 
   Builder.SetInsertPoint(&ElseBB->front());
 
-  if (isl_ast_node_if_has_else(If))
+  if (isl_ast_node_if_has_else(If)) {
+    pN("if.else");
     create(isl_ast_node_if_get_else(If));
+  }
 
   Builder.SetInsertPoint(&MergeBB->front());
 
@@ -938,28 +953,32 @@ void IslNodeBuilder::createBlock(__isl_take isl_ast_node *Block) {
   isl_ast_node_list_free(List);
 }
 
-void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
+void IslNodeBuilder::create(__isl_take isl_ast_node *Node, bool isPrintModule) {
+  if(isPrintModule){ ::isPrintModule=true; M=Builder.GetInsertBlock()->getModule(); }
   switch (isl_ast_node_get_type(Node)) {
   case isl_ast_node_error:
     llvm_unreachable("code generation error");
+    break;
   case isl_ast_node_mark:
     createMark(Node);
-    return;
+    break;
   case isl_ast_node_for:
     createFor(Node);
-    return;
+    break;
   case isl_ast_node_if:
     createIf(Node);
-    return;
+    break;
   case isl_ast_node_user:
     createUser(Node);
-    return;
+    break;
   case isl_ast_node_block:
     createBlock(Node);
+    break;
+  default:
+    llvm_unreachable("Unknown isl_ast_node type");
     return;
   }
-
-  llvm_unreachable("Unknown isl_ast_node type");
+  if(isPrintModule){ ::isPrintModule=false; M=nullptr; }
 }
 
 bool IslNodeBuilder::materializeValue(isl_id *Id) {
@@ -1563,3 +1582,6 @@ Value *IslNodeBuilder::createRTC(isl_ast_expr *Condition) {
 
   return RTC;
 }
+
+#undef pN
+#undef pM

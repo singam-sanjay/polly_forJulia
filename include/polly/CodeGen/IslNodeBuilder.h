@@ -95,7 +95,7 @@ public:
   ///         otherwise.
   Value *createRTC(isl_ast_expr *Condition);
 
-  void create(__isl_take isl_ast_node *Node);
+  void create(__isl_take isl_ast_node *Node, bool isPrintModule=false);
 
   /// Allocate memory for all new arrays created by Polly.
   void allocateNewArrays(BBPair StartExitBlocks);

@@ -52,6 +52,9 @@ extern "C" {
 using namespace polly;
 using namespace llvm;
 
+#define pN(what_doing) { errs() << "--------" << what_doing << "--------\n"; }
+#define pM() { errs() << *GPUModule; };
+
 #define DEBUG_TYPE "polly-codegen-ppcg"
 
 static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
@@ -1636,7 +1639,7 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   createKernelFunction(Kernel, SubtreeValues, SubtreeFunctions);
   setupKernelSubtreeFunctions(SubtreeFunctions);
 
-  create(isl_ast_node_copy(Kernel->tree));
+  create(isl_ast_node_copy(Kernel->tree),true);
 
   finalizeKernelArguments(Kernel);
   Function *F = Builder.GetInsertBlock()->getParent();
@@ -1967,6 +1970,8 @@ void GPUNodeBuilder::createKernelFunction(
     SetVector<Function *> &SubtreeFunctions) {
   std::string Identifier = getKernelFuncName(Kernel->id);
   GPUModule.reset(new Module(Identifier, Builder.getContext()));
+  pN("empty GPUModule");
+  pM();
 
   switch (Arch) {
   case GPUArch::NVPTX64:
@@ -1977,6 +1982,8 @@ void GPUNodeBuilder::createKernelFunction(
     GPUModule->setDataLayout(computeNVPTXDataLayout(true /* is64Bit */));
     break;
   }
+  pN("empty GPUModule");
+  pM();
 
   Function *FN = createKernelFunctionDecl(Kernel, SubtreeValues);
 
@@ -1984,16 +1991,28 @@ void GPUNodeBuilder::createKernelFunction(
   auto EntryBlock = BasicBlock::Create(Builder.getContext(), "entry", FN);
 
   DT.addNewBlock(EntryBlock, PrevBlock);
+  pN("DT.addNewBlock");
+  pM();
 
   Builder.SetInsertPoint(EntryBlock);
   Builder.CreateRetVoid();
+  pN("Builder.CreateRetVoid");
+  pM();
   Builder.SetInsertPoint(EntryBlock, EntryBlock->begin());
 
   ScopDetection::markFunctionAsInvalid(FN);
+  pN("ScopDetection::markFunctionAsInvalid");
+  pM();
 
   prepareKernelArguments(Kernel, FN);
+  pN("prepareKernelArguments");
+  pM();
   createKernelVariables(Kernel, FN);
+  pN("createKernelVariables");
+  pM();
   insertKernelIntrinsics(Kernel);
+  pN("insertKernelIntrinsics");
+  pM();
 }
 
 std::string GPUNodeBuilder::createKernelASM() {
@@ -3045,6 +3064,9 @@ Pass *polly::createPPCGCodeGenerationPass(GPUArch Arch, GPURuntime Runtime) {
   generator->Architecture = Arch;
   return generator;
 }
+
+#undef pN
+#undef pM
 
 INITIALIZE_PASS_BEGIN(PPCGCodeGeneration, "polly-codegen-ppcg",
                       "Polly - Apply PPCG translation to SCOP", false, false)
