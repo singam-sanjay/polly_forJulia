@@ -523,7 +523,10 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
   IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, LI, DT, ExitBlock,
                   Predicate, &Annotator, Parallel, UseGuardBB);
   IDToValue[IteratorID] = IV;
-
+  pN("for.seq.structure");
+  pM();
+ 
+  pN("for.seq.body");
   create(Body);
 
   Annotator.popLoop(Parallel);
@@ -774,6 +777,7 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   Builder.CreateBr(MergeBB);
   Builder.SetInsertPoint(&ThenBB->front());
 
+  pN("if.cond")
   pM();
 
   pN("if.then");
@@ -945,9 +949,12 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
 
 void IslNodeBuilder::createBlock(__isl_take isl_ast_node *Block) {
   isl_ast_node_list *List = isl_ast_node_block_get_children(Block);
+  pN(std::string("block with ")+std::to_string(isl_ast_node_list_n_ast_node(List))+" children");
 
-  for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i)
+  for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i) {
+    pN(std::string("child #")+std::to_string(i+1));
     create(isl_ast_node_list_get_ast_node(List, i));
+  }
 
   isl_ast_node_free(Block);
   isl_ast_node_list_free(List);
@@ -960,7 +967,9 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node, bool isPrintModule) {
     llvm_unreachable("code generation error");
     break;
   case isl_ast_node_mark:
+    pN("mark");
     createMark(Node);
+    pM();
     break;
   case isl_ast_node_for:
     createFor(Node);
@@ -969,6 +978,7 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node, bool isPrintModule) {
     createIf(Node);
     break;
   case isl_ast_node_user:
+    pN("user");
     createUser(Node);
     break;
   case isl_ast_node_block:

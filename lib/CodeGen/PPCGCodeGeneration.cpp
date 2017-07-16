@@ -1179,16 +1179,22 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
 
   switch (KernelStmt->type) {
   case ppcg_kernel_domain:
+    pN("ScopStmt");
     createScopStmt(Expr, KernelStmt);
+    pM();
     isl_ast_node_free(UserStmt);
     return;
   case ppcg_kernel_copy:
+    pN("KernelCopy");
     createKernelCopy(KernelStmt);
+    pM();
     isl_ast_expr_free(Expr);
     isl_ast_node_free(UserStmt);
     return;
   case ppcg_kernel_sync:
+    pN("KernelSync");
     createKernelSync();
+    pM();
     isl_ast_expr_free(Expr);
     isl_ast_node_free(UserStmt);
     return;
