@@ -50,6 +50,10 @@ using namespace polly;
 using namespace llvm;
 
 #define DEBUG_TYPE "polly-codegen"
+static Module *M;
+#define pM(node_type) { if(::isPrintModule){ errs() << "-----" << node_type << "-----" << '\n' << *M; } }
+
+static bool isPrintModule;
 
 STATISTIC(VersionedScops, "Number of SCoPs that required versioning.");
 
@@ -713,6 +717,8 @@ static bool hasPartialAccesses(__isl_take isl_ast_node *Node) {
 void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
   bool Vector = PollyVectorizerChoice == VECTORIZER_POLLY;
 
+  if(::isPrintModule)
+    errs() << "----for----\n";
   if (Vector && IslAstInfo::isInnermostParallel(For) &&
       !IslAstInfo::isReductionParallel(For)) {
     int VectorWidth = getNumberOfIterations(For);
@@ -763,13 +769,17 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   Builder.SetInsertPoint(ElseBB);
   Builder.CreateBr(MergeBB);
   Builder.SetInsertPoint(&ThenBB->front());
+  pM("if");
 
+  if(::isPrintModule)errs() << "----if.then----\n";
   create(isl_ast_node_if_get_then(If));
 
   Builder.SetInsertPoint(&ElseBB->front());
 
-  if (isl_ast_node_if_has_else(If))
+  if (isl_ast_node_if_has_else(If)) {
+    if(::isPrintModule)errs() << "----if.else----\n";
     create(isl_ast_node_if_get_else(If));
+  }
 
   Builder.SetInsertPoint(&MergeBB->front());
 
@@ -931,6 +941,8 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
 void IslNodeBuilder::createBlock(__isl_take isl_ast_node *Block) {
   isl_ast_node_list *List = isl_ast_node_block_get_children(Block);
 
+  if(::isPrintModule)
+    errs() << "----" << "block " + std::to_string(isl_ast_node_list_n_ast_node(List)) + " children" << "----" << '\n';
   for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i)
     create(isl_ast_node_list_get_ast_node(List, i));
 
@@ -938,28 +950,32 @@ void IslNodeBuilder::createBlock(__isl_take isl_ast_node *Block) {
   isl_ast_node_list_free(List);
 }
 
-void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
+void IslNodeBuilder::create(__isl_take isl_ast_node *Node, bool isPrintModule) {
+  if(isPrintModule)  {
+    ::isPrintModule = true;
+    M = Builder.GetInsertBlock()->getModule();
+  }
   switch (isl_ast_node_get_type(Node)) {
   case isl_ast_node_error:
     llvm_unreachable("code generation error");
   case isl_ast_node_mark:
     createMark(Node);
-    return;
   case isl_ast_node_for:
     createFor(Node);
-    return;
   case isl_ast_node_if:
     createIf(Node);
-    return;
   case isl_ast_node_user:
     createUser(Node);
-    return;
   case isl_ast_node_block:
     createBlock(Node);
-    return;
+  default:
+    llvm_unreachable("Unknown isl_ast_node type");
+  }
+  if(isPrintModule)  {
+    ::isPrintModule=false;
+    M = nullptr;
   }
 
-  llvm_unreachable("Unknown isl_ast_node type");
 }
 
 bool IslNodeBuilder::materializeValue(isl_id *Id) {

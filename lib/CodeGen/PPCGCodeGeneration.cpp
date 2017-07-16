@@ -54,6 +54,13 @@ using namespace llvm;
 
 #define DEBUG_TYPE "polly-codegen-ppcg"
 
+static int n = 1;
+
+#define pGPU() { int i=10; while(i--)errs()<<'-'; i=__LINE__;\
+                     errs()<< "   " << __func__ << '@' << i << "===" << n << "   ";++n;\
+                     i=10; while(i--)errs()<<'-';\
+                     errs()<<'\n'<<*GPUModule<<'\n';errs().flush();}
+
 static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
                                   cl::desc("Dump the computed GPU Schedule"),
                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
@@ -1143,6 +1150,7 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
 
   const char *Str = isl_id_get_name(Id);
   if (!strcmp(Str, "kernel")) {
+    errs() << "kernel.\n";
     createKernel(UserStmt);
     isl_ast_expr_free(Expr);
     return;
@@ -1153,7 +1161,7 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
       createDataTransfer(UserStmt, HOST_TO_DEVICE);
     else
       isl_ast_node_free(UserStmt);
-
+    errs() << "to_device";
     isl_ast_expr_free(Expr);
     return;
   }
@@ -1165,6 +1173,7 @@ void GPUNodeBuilder::createUser(__isl_take isl_ast_node *UserStmt) {
       createCallSynchronizeDevice();
       isl_ast_node_free(UserStmt);
     }
+    errs() << "from_device\n";
     isl_ast_expr_free(Expr);
     return;
   }
@@ -1636,11 +1645,14 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   createKernelFunction(Kernel, SubtreeValues, SubtreeFunctions);
   setupKernelSubtreeFunctions(SubtreeFunctions);
 
-  create(isl_ast_node_copy(Kernel->tree));
+  errs() << "GONNA BUILD KERNEL NOW !!!!\n\n";
+  create(isl_ast_node_copy(Kernel->tree),true);
 
+  //pGPU();
   finalizeKernelArguments(Kernel);
   Function *F = Builder.GetInsertBlock()->getParent();
   addCUDAAnnotations(F->getParent(), BlockDimX, BlockDimY, BlockDimZ);
+  // pGPU(); CUDA annotations at !0 here
   clearDominators(F);
   clearScalarEvolution(F);
   clearLoops(F);
@@ -1968,6 +1980,8 @@ void GPUNodeBuilder::createKernelFunction(
   std::string Identifier = getKernelFuncName(Kernel->id);
   GPUModule.reset(new Module(Identifier, Builder.getContext()));
 
+  pGPU();
+
   switch (Arch) {
   case GPUArch::NVPTX64:
     if (Runtime == GPURuntime::CUDA)
@@ -1979,21 +1993,31 @@ void GPUNodeBuilder::createKernelFunction(
   }
 
   Function *FN = createKernelFunctionDecl(Kernel, SubtreeValues);
+  pGPU();
 
   BasicBlock *PrevBlock = Builder.GetInsertBlock();
   auto EntryBlock = BasicBlock::Create(Builder.getContext(), "entry", FN);
+  pGPU();
 
   DT.addNewBlock(EntryBlock, PrevBlock);
+  pGPU();
 
   Builder.SetInsertPoint(EntryBlock);
+  pGPU();
   Builder.CreateRetVoid();
+  pGPU();
   Builder.SetInsertPoint(EntryBlock, EntryBlock->begin());
+  pGPU();
 
   ScopDetection::markFunctionAsInvalid(FN);
+  pGPU();
 
   prepareKernelArguments(Kernel, FN);
+  pGPU();
   createKernelVariables(Kernel, FN);
+  pGPU();
   insertKernelIntrinsics(Kernel);
+  pGPU();
 }
 
 std::string GPUNodeBuilder::createKernelASM() {
@@ -2053,7 +2077,8 @@ std::string GPUNodeBuilder::createKernelASM() {
 
 std::string GPUNodeBuilder::finalizeKernelFunction() {
 
-  if (verifyModule(*GPUModule)) {
+   //pGPU();
+  if (verifyModule(*GPUModule,&errs())) {
     DEBUG(dbgs() << "verifyModule failed on module:\n";
           GPUModule->print(dbgs(), nullptr); dbgs() << "\n";);
 
