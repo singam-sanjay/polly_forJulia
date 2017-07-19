@@ -214,8 +214,10 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
   // We do not generate debug intrinsics as we did not investigate how to
   // copy them correctly. At the current state, they just crash the code
   // generation as the meta-data operands are not correctly copied.
-  if (isa<DbgInfoIntrinsic>(Inst))
+  if (isa<DbgInfoIntrinsic>(Inst)) {
+    //errs() << *Inst << " was a DbgInfo\n";
     return;
+  }
 
   Instruction *NewInst = Inst->clone();
 
@@ -233,6 +235,7 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
 
     NewInst->replaceUsesOfWith(OldOperand, NewOperand);
   }
+  NewInst->setDebugLoc(llvm::DebugLoc());
 
   Builder.Insert(NewInst);
   BBMap[Inst] = NewInst;
@@ -347,18 +350,22 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, Instruction *Inst,
                                      isl_id_to_ast_expr *NewAccesses) {
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
-  if (Inst->isTerminator())
+  if (Inst->isTerminator()) {
+    //errs() << "not gonna copy " << *Inst << '\n';
     return;
-
+  }
   // Synthesizable statements will be generated on-demand.
-  if (canSyntheziseInStmt(Stmt, Inst))
+  if (canSyntheziseInStmt(Stmt, Inst)) {
+    //errs() << "not gonna copy " << *Inst << '\n';
     return;
+  }
 
   if (auto *Load = dyn_cast<LoadInst>(Inst)) {
     Value *NewLoad = generateArrayLoad(Stmt, Load, BBMap, LTS, NewAccesses);
     // Compute NewLoad before its insertion in BBMap to make the insertion
     // deterministic.
     BBMap[Load] = NewLoad;
+    //errs() << "gonna copy " << *Inst << '\n';
     return;
   }
 
@@ -367,20 +374,25 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, Instruction *Inst,
     if (!Stmt.getArrayAccessOrNULLFor(Store))
       return;
 
+    Store->setDebugLoc(llvm::DebugLoc());
+    //errs() << "gonna copy " << *Inst << '\n';
     generateArrayStore(Stmt, Store, BBMap, LTS, NewAccesses);
     return;
   }
 
   if (auto *PHI = dyn_cast<PHINode>(Inst)) {
+    //errs() << "gonna copy " << *Inst << '\n';
+    PHI->setDebugLoc(llvm::DebugLoc());
     copyPHIInstruction(Stmt, PHI, BBMap, LTS);
     return;
   }
 
   // Skip some special intrinsics for which we do not adjust the semantics to
   // the new schedule. All others are handled like every other instruction.
-  if (isIgnoredIntrinsic(Inst))
+  if (isIgnoredIntrinsic(Inst)) {
+    //errs() << *Inst << " gonna be skipped.\n";
     return;
-
+  }
   copyInstScalar(Stmt, Inst, BBMap, LTS);
 }
 
@@ -440,10 +452,13 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
                             ValueMapT &BBMap, LoopToScevMapT &LTS,
                             isl_id_to_ast_expr *NewAccesses) {
   EntryBB = &CopyBB->getParent()->getEntryBlock();
+  //errs() << "Copying " << CopyBB->getName() << " then " << BB->getName() << '\n';
 
   if (Stmt.isBlockStmt())
-    for (Instruction *Inst : Stmt.getInstructions())
+    for (Instruction *Inst : Stmt.getInstructions()) {
+      //errs() << ":: " << *Inst << '\n';
       copyInstruction(Stmt, Inst, BBMap, LTS, NewAccesses);
+    }
   else
     for (Instruction &Inst : *BB)
       copyInstruction(Stmt, &Inst, BBMap, LTS, NewAccesses);

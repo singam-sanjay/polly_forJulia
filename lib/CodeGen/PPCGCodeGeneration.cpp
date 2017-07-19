@@ -52,8 +52,9 @@ extern "C" {
 using namespace polly;
 using namespace llvm;
 
-#define pN(what_doing) { errs() << "--------" << what_doing << "--------\n"; }
-#define pM() { errs() << *GPUModule; };
+static bool isPrintModule = false;
+#define pN(what_doing) { if(::isPrintModule)errs() << "--------" << what_doing << "--------\n"; }
+#define pM() { if(::isPrintModule)errs() << *GPUModule; };
 
 #define DEBUG_TYPE "polly-codegen-ppcg"
 
@@ -1231,10 +1232,14 @@ void GPUNodeBuilder::createScopStmt(isl_ast_expr *Expr,
 
   createSubstitutions(Expr, Stmt, LTS);
 
-  if (Stmt->isBlockStmt())
+  if (Stmt->isBlockStmt()) {
+    //errs() << "Block Stmt";
     BlockGen.copyStmt(*Stmt, LTS, Indexes);
-  else
+  } else {
+    //errs() << "Region Stmt";
     RegionGen.copyStmt(*Stmt, LTS, Indexes);
+  }
+  //errs() << '\n';
 }
 
 void GPUNodeBuilder::createKernelSync() {
@@ -1645,7 +1650,7 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   createKernelFunction(Kernel, SubtreeValues, SubtreeFunctions);
   setupKernelSubtreeFunctions(SubtreeFunctions);
 
-  create(isl_ast_node_copy(Kernel->tree),true);
+  create(isl_ast_node_copy(Kernel->tree));
 
   finalizeKernelArguments(Kernel);
   Function *F = Builder.GetInsertBlock()->getParent();
@@ -2078,7 +2083,8 @@ std::string GPUNodeBuilder::createKernelASM() {
 
 std::string GPUNodeBuilder::finalizeKernelFunction() {
 
-  if (verifyModule(*GPUModule)) {
+  //errs() << *GPUModule;
+  if (verifyModule(*GPUModule/*,&(errs()*/))) {
     DEBUG(dbgs() << "verifyModule failed on module:\n";
           GPUModule->print(dbgs(), nullptr); dbgs() << "\n";);
 
