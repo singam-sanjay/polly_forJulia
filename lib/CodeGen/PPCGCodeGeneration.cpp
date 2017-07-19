@@ -2084,7 +2084,7 @@ std::string GPUNodeBuilder::createKernelASM() {
 std::string GPUNodeBuilder::finalizeKernelFunction() {
 
   //errs() << *GPUModule;
-  if (verifyModule(*GPUModule/*,&(errs()*/))) {
+  if (verifyModule(*GPUModule/*,&(errs())*/)) {
     DEBUG(dbgs() << "verifyModule failed on module:\n";
           GPUModule->print(dbgs(), nullptr); dbgs() << "\n";);
 
