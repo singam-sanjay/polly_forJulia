@@ -21,8 +21,8 @@
 ; -mllvm -polly-dump-before vec_add_1.ll -S -emit-llvm`, in the form of the dump.
 ; vec_add_1.c:
 ;      void vec_add_1(int N, int arr[N]) {
-;	  int i=0;
-;	  for( i=0 ; i<N ; i++) arr[i] += 1;
+;        int i=0;
+;        for( i=0 ; i<N ; i++) arr[i] += 1;
 ;      }
 ; 
 ; The following IR, a residue of the original IR dump, was produced by bugpoint
