@@ -235,7 +235,7 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
   }
 
   // When copying the instruction onto the Module meant for the GPU,
-  // debug metadata attached to an instruction causes all related 
+  // debug metadata attached to an instruction causes all related
   // metadata to be pulled into the Module. This includes the DICompileUnit,
   // which will not be listed in llvm.dbg.cu of the Module since the Module
   // doesn't contain one. This fails the verification of the Module and the
