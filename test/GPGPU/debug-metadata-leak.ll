@@ -59,10 +59,6 @@ for.end:                                          ; preds = %for.cond
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata)
 
-declare void @llvm.lifetime.start.p0i8(i64, i8* nocapture)
-
-declare void @llvm.lifetime.end.p0i8(i64, i8* nocapture)
-
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 
 
