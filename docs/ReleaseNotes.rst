@@ -93,4 +93,5 @@ tool, allowing for remarks to be viewed next to the source code, and sorted by h
 Polly-ACC works with Julia
 --------------------------
 
-Polly can now offload Julia to GPUs. This feature is enabled by setting the USE_POLLY_ACC variable to 1, i.e. USE_POLLY_ACC:=1.
+Polly can now offload Julia to GPUs. This feature is enabled by setting the 
+USE_POLLY_ACC variable to 1, i.e. USE_POLLY_ACC:=1.
