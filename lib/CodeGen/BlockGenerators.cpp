@@ -23,6 +23,7 @@
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/VirtualInstruction.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -233,6 +234,10 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
 
     NewInst->replaceUsesOfWith(OldOperand, NewOperand);
   }
+
+  auto TargetArch = Triple(Builder.GetInsertBlock()->getModule()->getTargetTriple()).getArch();
+  if( TargetArch == Triple::ArchType::nvptx64 || TargetArch == Triple::ArchType::spir || TargetArch == Triple::ArchType::spir64 )
+    NewInst->setDebugLoc(llvm::DebugLoc());
 
   Builder.Insert(NewInst);
   BBMap[Inst] = NewInst;
