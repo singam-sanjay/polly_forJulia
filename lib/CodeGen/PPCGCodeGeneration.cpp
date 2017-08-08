@@ -2202,10 +2202,9 @@ void GPUNodeBuilder::finalizeKernelArguments(ppcg_kernel *Kernel) {
     /// memory store or at least before each kernel barrier.
     if (Kernel->n_block != 0 || Kernel->n_grid != 0) {
       BuildSuccessful = 0;
-      DEBUG(
-          dbgs() << getUniqueScopName(&S)
-                 << " has a store to a scalar value that"
-                    " would be undefined to run in parallel. Bailing out.\n";);
+      errs() << getUniqueScopName(&S)
+             << " has a store to a scalar value that"
+                " would be undefined to run in parallel. Bailing out.\n";
     }
   }
 }
@@ -2437,10 +2436,10 @@ void GPUNodeBuilder::addCUDALibDevice() {
 std::string GPUNodeBuilder::finalizeKernelFunction() {
 
   if (verifyModule(*GPUModule)) {
-    DEBUG(dbgs() << "verifyModule failed on module:\n";
-          GPUModule->print(dbgs(), nullptr); dbgs() << "\n";);
-    DEBUG(dbgs() << "verifyModule Error:\n";
-          verifyModule(*GPUModule, &dbgs()););
+    errs() << "verifyModule failed on module:\n";
+          GPUModule->print(errs(), nullptr); errs() << "\n";
+    errs() << "verifyModule Error:\n";
+          verifyModule(*GPUModule, &errs());
 
     if (FailOnVerifyModuleFailure)
       llvm_unreachable("VerifyModule failed.");
@@ -3200,8 +3199,8 @@ public:
 
     if (!has_permutable || has_permutable < 0) {
       Schedule = isl_schedule_free(Schedule);
-      DEBUG(dbgs() << getUniqueScopName(S)
-                   << " does not have permutable bands. Bailing out\n";);
+      errs() << getUniqueScopName(S)
+             << " does not have permutable bands. Bailing out\n";
     } else {
       const bool CreateTransferToFromDevice = !PollyManagedMemory;
       Schedule = map_to_device(PPCGGen, Schedule, CreateTransferToFromDevice);
@@ -3452,9 +3451,9 @@ public:
     // preload invariant loads. Note: This should happen before the RTC
     // because the RTC may depend on values that are invariant load hoisted.
     if (!NodeBuilder.preloadInvariantLoads()) {
-      DEBUG(dbgs() << "preloading invariant loads failed in function: " +
-                          S->getFunction().getName() +
-                          " | Scop Region: " + S->getNameStr());
+      errs() << "preloading invariant loads failed in function: " +
+                    S->getFunction().getName() +
+                    " | Scop Region: " + S->getNameStr();
       // adjust the dominator tree accordingly.
       auto *ExitingBlock = StartBlock->getUniqueSuccessor();
       assert(ExitingBlock);
@@ -3499,8 +3498,10 @@ public:
     /// In case a sequential kernel has more surrounding loops as any parallel
     /// kernel, the SCoP is probably mostly sequential. Hence, there is no
     /// point in running it on a GPU.
-    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel)
+    if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel) {
       CondBr->setOperand(0, Builder.getFalse());
+      errs() << "GPU offload might be inefficient.\n";
+    }
 
     if (!NodeBuilder.BuildSuccessful)
       CondBr->setOperand(0, Builder.getFalse());
@@ -3524,10 +3525,9 @@ public:
     // address of an intrinsic function to send to the kernel.
     if (containsInvalidKernelFunction(CurrentScop,
                                       Architecture == GPUArch::NVPTX64)) {
-      DEBUG(
-          dbgs() << getUniqueScopName(S)
-                 << " contains function which cannot be materialised in a GPU "
-                    "kernel. Bailing out.\n";);
+      errs() << getUniqueScopName(S)
+             << " contains function which cannot be materialised in a GPU "
+                "kernel. Bailing out.\n";
       return false;
     }
 
@@ -3539,8 +3539,8 @@ public:
       generateCode(isl_ast_node_copy(PPCGGen->tree), PPCGProg);
       CurrentScop.markAsToBeSkipped();
     } else {
-      DEBUG(dbgs() << getUniqueScopName(S)
-                   << " has empty PPCGGen->tree. Bailing out.\n");
+      errs() << getUniqueScopName(S)
+             << " has empty PPCGGen->tree. Bailing out.\n";
     }
 
     freeOptions(PPCGScop);

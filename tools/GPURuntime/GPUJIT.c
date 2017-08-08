@@ -1418,7 +1418,7 @@ static void launchKernelCUDA(PollyGPUFunction *Kernel, unsigned int GridDimX,
     exit(-1);
   }
 }
-
+/*
 // Maximum number of managed memory pointers.
 #define DEFAULT_MAX_POINTERS 4000
 // For the rationale behing a list of free pointers, see `polly_freeManaged`.
@@ -1498,7 +1498,7 @@ void *mallocManagedCUDA(size_t size) {
   addManagedPtr(newMemPtr);
   return newMemPtr;
 }
-
+*/
 static void freeDeviceMemoryCUDA(PollyGPUDevicePtr *Allocation) {
   dump_function();
   CUDADevicePtr *DevPtr = (CUDADevicePtr *)Allocation->DevicePtr;
