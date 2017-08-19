@@ -324,7 +324,11 @@ public:
 
   /// Return the number of dimensions.
   unsigned getNumberOfDimensions() const {
-    if (Kind == MemoryKind::PHI || Kind == MemoryKind::ExitPHI ||
+    assert(this);
+    if (Kind 
+		    == 
+		    MemoryKind::PHI ||
+	Kind == MemoryKind::ExitPHI ||
         Kind == MemoryKind::Value)
       return 0;
     return DimensionSizes.size();

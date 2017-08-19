@@ -1503,6 +1503,7 @@ static void freeDeviceMemoryCUDA(PollyGPUDevicePtr *Allocation) {
   dump_function();
   CUDADevicePtr *DevPtr = (CUDADevicePtr *)Allocation->DevicePtr;
   CuMemFreeFcnPtr((CUdeviceptr)DevPtr->Cuda);
+  //fprintf(stderr,"Freed %u\n",(CUdeviceptr)DevPtr->Cuda);
   free(DevPtr);
   free(Allocation);
 }
@@ -1542,6 +1543,7 @@ static PollyGPUDevicePtr *allocateMemoryForDeviceCUDA(long MemSize) {
             __LINE__, MemSize);
     exit(-1);
   }
+  //fprintf(stderr,"Allocated %li bytes @ %u\n",MemSize,((CUDADevicePtr *)DevData->DevicePtr)->Cuda);
 
   return DevData;
 }

@@ -668,6 +668,8 @@ const ScopArrayInfo *MemoryAccess::getOriginalScopArrayInfo() const {
   isl::id ArrayId = getArrayId();
   void *User = ArrayId.get_user();
   const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
+//  if( SAI==NULL ) {
+//	  dbgs() << __func__ << "SAI be NULL\n"; }
   return SAI;
 }
 

@@ -2202,7 +2202,7 @@ void GPUNodeBuilder::finalizeKernelArguments(ppcg_kernel *Kernel) {
     /// memory store or at least before each kernel barrier.
     if (Kernel->n_block != 0 || Kernel->n_grid != 0) {
       BuildSuccessful = 0;
-      errs() << getUniqueScopName(&S)
+      dbgs() << getUniqueScopName(&S)
              << " has a store to a scalar value that"
                 " would be undefined to run in parallel. Bailing out.\n";
     }
@@ -2338,7 +2338,7 @@ std::string GPUNodeBuilder::createKernelASM() {
   auto GPUTarget = TargetRegistry::lookupTarget(GPUTriple.getTriple(), ErrMsg);
 
   if (!GPUTarget) {
-    errs() << ErrMsg << "\n";
+    dbgs() << ErrMsg << "\n";
     return "";
   }
 
@@ -2436,10 +2436,11 @@ void GPUNodeBuilder::addCUDALibDevice() {
 std::string GPUNodeBuilder::finalizeKernelFunction() {
 
   if (verifyModule(*GPUModule)) {
-    errs() << "verifyModule failed on module:\n";
-          GPUModule->print(errs(), nullptr); errs() << "\n";
-    errs() << "verifyModule Error:\n";
-          verifyModule(*GPUModule, &errs());
+    dbgs() << "verifyModule failed on module:\n";
+    GPUModule->print(dbgs(), nullptr);
+    dbgs() << "\n";
+    dbgs() << "verifyModule Error:\n";
+    verifyModule(*GPUModule, &dbgs());
 
     if (FailOnVerifyModuleFailure)
       llvm_unreachable("VerifyModule failed.");
@@ -2447,6 +2448,8 @@ std::string GPUNodeBuilder::finalizeKernelFunction() {
     BuildSuccessful = false;
     return "";
   }
+
+  dbgs() << GPUModule->getName().str() << " verified OK :)\n";
 
   addCUDALibDevice();
 
@@ -3199,7 +3202,7 @@ public:
 
     if (!has_permutable || has_permutable < 0) {
       Schedule = isl_schedule_free(Schedule);
-      errs() << getUniqueScopName(S)
+      dbgs() << getUniqueScopName(S)
              << " does not have permutable bands. Bailing out\n";
     } else {
       const bool CreateTransferToFromDevice = !PollyManagedMemory;
@@ -3451,7 +3454,7 @@ public:
     // preload invariant loads. Note: This should happen before the RTC
     // because the RTC may depend on values that are invariant load hoisted.
     if (!NodeBuilder.preloadInvariantLoads()) {
-      errs() << "preloading invariant loads failed in function: " +
+      dbgs() << "preloading invariant loads failed in function: " +
                     S->getFunction().getName() +
                     " | Scop Region: " + S->getNameStr();
       // adjust the dominator tree accordingly.
@@ -3500,7 +3503,7 @@ public:
     /// point in running it on a GPU.
     if (NodeBuilder.DeepestSequential > NodeBuilder.DeepestParallel) {
       CondBr->setOperand(0, Builder.getFalse());
-      errs() << "GPU offload might be inefficient.\n";
+      dbgs() << "GPU offload might be inefficient.\n";
     }
 
     if (!NodeBuilder.BuildSuccessful)
@@ -3515,8 +3518,8 @@ public:
     DL = &S->getRegion().getEntry()->getModule()->getDataLayout();
     RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
 
-    DEBUG(dbgs() << "PPCGCodeGen running on : " << getUniqueScopName(S)
-                 << " | loop depth: " << S->getMaxLoopDepth() << "\n");
+    dbgs() << "PPCGCodeGen running on : " << getUniqueScopName(S)
+                 << " | loop depth: " << S->getMaxLoopDepth() << "\n";
 
     // We currently do not support functions other than intrinsics inside
     // kernels, as code generation will need to offload function calls to the
@@ -3525,7 +3528,7 @@ public:
     // address of an intrinsic function to send to the kernel.
     if (containsInvalidKernelFunction(CurrentScop,
                                       Architecture == GPUArch::NVPTX64)) {
-      errs() << getUniqueScopName(S)
+      dbgs() << getUniqueScopName(S)
              << " contains function which cannot be materialised in a GPU "
                 "kernel. Bailing out.\n";
       return false;
@@ -3539,7 +3542,7 @@ public:
       generateCode(isl_ast_node_copy(PPCGGen->tree), PPCGProg);
       CurrentScop.markAsToBeSkipped();
     } else {
-      errs() << getUniqueScopName(S)
+      dbgs() << getUniqueScopName(S)
              << " has empty PPCGGen->tree. Bailing out.\n";
     }
 

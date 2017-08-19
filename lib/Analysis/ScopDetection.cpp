@@ -1804,6 +1804,9 @@ bool ScopDetectionWrapperPass::runOnFunction(Function &F) {
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto &ORE = getAnalysis<OptimizationRemarkEmitterWrapperPass>().getORE();
   Result.reset(new ScopDetection(F, DT, SE, LI, RI, AA, ORE));
+  std::string F_name = F.getName().str();
+  if( F_name.find("kernel_") != std::string::npos )
+    dbgs() << "Running on " << F.getName().str() << '\n';
   return false;
 }
 
