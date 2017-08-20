@@ -184,8 +184,10 @@ static bool CodeGen(Scop &S, IslAstInfo &AI, LoopInfo &LI, DominatorTree &DT,
                     ScalarEvolution &SE, RegionInfo &RI) {
   // Check if we created an isl_ast root node, otherwise exit.
   isl_ast_node *AstRoot = AI.getAst();
-  if (!AstRoot)
+  if (!AstRoot) {
+    dbgs() << "No AST Node...\n";
     return false;
+  }
 
   // Collect statistics. Do it before we modify the IR to avoid having it any
   // influence on the result.
@@ -292,6 +294,8 @@ static bool CodeGen(Scop &S, IslAstInfo &AI, LoopInfo &LI, DominatorTree &DT,
   // Mark the function such that we run additional cleanup passes on this
   // function (e.g. mem2reg to rediscover phi nodes).
   F->addFnAttr("polly-optimized");
+  dbgs() << "Optimizations applied on " << S.getName().str() << '\n';
+
   return true;
 }
 

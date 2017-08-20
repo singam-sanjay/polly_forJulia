@@ -3506,8 +3506,10 @@ public:
       dbgs() << "GPU offload might be inefficient.\n";
     }
 
-    if (!NodeBuilder.BuildSuccessful)
+    if (!NodeBuilder.BuildSuccessful) {
+      dbgs() << "BuildFailed\n";
       CondBr->setOperand(0, Builder.getFalse());
+    }
   }
 
   bool runOnScop(Scop &CurrentScop) override {

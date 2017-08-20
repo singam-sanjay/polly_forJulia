@@ -1465,22 +1465,29 @@ static void walkScheduleTreeForStatistics(isl::schedule Schedule, int Version) {
 }
 
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
+  dbgs() << "IslScheduleOptimizer running on " << S.getName() << '\n';
+
   // Skip SCoPs in case they're already optimised by PPCGCodeGeneration
-  if (S.isToBeSkipped())
+  if (S.isToBeSkipped()) {
+    dbgs() << "Already optimized by PPCGCodeGeneration, Skipping it...\n";
     return false;
+  }
 
   // Skip empty SCoPs but still allow code generation as it will delete the
   // loops present but not needed.
   if (S.getSize() == 0) {
     S.markAsOptimized();
+    dbgs() << "Empty SCoP, Skipping it...\n";
     return false;
   }
 
   const Dependences &D =
       getAnalysis<DependenceInfo>().getDependences(Dependences::AL_Statement);
 
-  if (!D.hasValidDependences())
+  if (!D.hasValidDependences()) {
+    dbgs() << "Has no Valid Dependences, Skipping it...\n";
     return false;
+  }
 
   isl_schedule_free(LastSchedule);
   LastSchedule = nullptr;
@@ -1504,8 +1511,10 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   isl::union_set Domain = S.getDomains();
 
-  if (!Domain)
+  if (!Domain) {
+    dbgs() << "Empty Domain...\n";
     return false;
+  }
 
   ScopsProcessed++;
   walkScheduleTreeForStatistics(S.getScheduleTree(), 0);
@@ -1594,8 +1603,10 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   // In cases the scheduler is not able to optimize the code, we just do not
   // touch the schedule.
-  if (!Schedule)
+  if (!Schedule) {
+    dbgs() << "Can't optimize...\n";
     return false;
+  }
 
   ScopsRescheduled++;
 
@@ -1615,8 +1626,10 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   auto NewSchedule = ScheduleTreeOptimizer::optimizeSchedule(Schedule, &OAI);
   walkScheduleTreeForStatistics(NewSchedule, 1);
 
-  if (!ScheduleTreeOptimizer::isProfitableSchedule(S, NewSchedule))
+  if (!ScheduleTreeOptimizer::isProfitableSchedule(S, NewSchedule)) {
+    dbgs() << "Not profitable optimization...\n";
     return false;
+  }
 
   auto ScopStats = S.getStatistics();
   ScopsOptimized++;
