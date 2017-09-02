@@ -1366,6 +1366,8 @@ static PollyGPUFunction *getKernelCUDA(const char *BinaryBuffer,
 
     NextCacheItem = (NextCacheItem + 1) % KERNEL_CACHE_SIZE;
   }
+  
+  printf("New kernel %s\n", KernelName);
 
   return Function;
 }

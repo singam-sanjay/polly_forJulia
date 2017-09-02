@@ -1339,7 +1339,7 @@ ScheduleTreeOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
   if (PMBasedOpts && User &&
       isMatrMultPattern(isl::manage(isl_schedule_node_copy(Node)), OAI->D,
                         MMI)) {
-    DEBUG(dbgs() << "The matrix multiplication pattern was detected\n");
+    dbgs() << "The matrix multiplication pattern was detected\n";
     MatMulOpts++;
     return optimizeMatMulPattern(isl::manage(Node), OAI->TTI, MMI).release();
   }
